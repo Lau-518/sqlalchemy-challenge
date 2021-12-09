@@ -48,8 +48,8 @@ def welcome():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/<start>"
-        f"/api/v1.0/<start>/<end>"
+        f"/api/v1.0/[start_date format:yyyy-mm-dd]<br/>"
+        f"/api/v1.0/[start_date format:yyyy-mm-dd]/[end_date format:yyyy-mm-dd]"
        
 
 
@@ -146,8 +146,7 @@ def start_date_climate(start_date):
     session = Session(engine)
 
     """Return a list of all tobs for the most active station in the database"""
-    # Query all precipation data per date
-    # results = session.query(Station.id, Station.station).all()
+
 
     start_date_climate = session.query(func.min(Measurement.tobs), 
                        func.avg(Measurement.tobs), 
@@ -162,7 +161,7 @@ def start_date_climate(start_date):
     # Create a dictionary from the row data and append to a list of all_passengers
 
     start_date_climate = []
-    for date, station, tobs_min,tobs_avg, tobs_max  in start_date_climate:
+    for tobs_min,tobs_avg, tobs_max  in start_date_climate:
         start_date_climate_dict = {}
         start_date_climate_dict["tobs_min"] = tobs_min
         start_date_climate_dict["tobs_avg"] = tobs_avg
@@ -171,11 +170,47 @@ def start_date_climate(start_date):
 
         start_date_climate.append(start_date_climate_dict)
 
+      
+
+
+    return jsonify(start_date_climate)
+
+@app.route("/api/v1.0/<start_date>/<end_date>")
+
+def start_end_date_climate(start_date, end_date):
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    """Return a list of all tobs for the most active station in the database"""
+
+    start_end_date_climate = session.query(func.min(Measurement.tobs), 
+                       func.avg(Measurement.tobs), 
+                        func.max(Measurement.tobs)).\
+                  filter(Measurement.date >= start_date).\
+                filter(Measurement.date <= end_date).all()
+                
+
+
+
+    session.close()
+
+    # Create a dictionary from the row data and append to a list of all_passengers
+
+    start_end_date_climate = []
+    for tobs_min,tobs_avg, tobs_max  in start_end_date_climate:
+        start_end_date_climate_dict = {}
+        start_end_date_climate_dict["tobs_min"] = tobs_min
+        start_end_date_climate_dict["tobs_avg"] = tobs_avg
+        start_end_date_climate_dict["tobs_max"] = tobs_max
+
+
+        start_end_date_climate.append(start_end_date_climate_dict)
+
    
     
 
 
-    return jsonify(start_date_climate)
+    return jsonify(start_end_date_climate)
 
 
 if __name__ == '__main__':
